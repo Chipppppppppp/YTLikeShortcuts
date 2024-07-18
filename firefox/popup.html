@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>YT-Like Shortcuts Settings</title>
+    <style>
+        body {
+            width: 500px;
+            height: 600px;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="dialog" method="dialog" style="display: flex; flex-direction: column; height: 100%; padding: 10px;">
+        <h2 style="margin: 0 0 10px 0;">Domain Settings</h2>
+        <div id="domain-list"
+            style="margin-bottom: 10px; flex-grow: 1; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
+        </div>
+        <div style="margin-bottom: 10px; display: flex;">
+            <input id="new-domain-input" type="text"
+                style="flex-grow: 1; margin-right: 5px; padding: 5px; color: black; background-color: white; border: 1px solid #ccc;">
+            <button id="add-domain" type="button" style="padding: 5px;">Add domain</button>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <button id="reset-domains" type="button" style="padding: 5px;">Reset to default</button>
+        </div>
+        <script src="popup.js"></script>
+    </form>
+</body>
+
+</html>
