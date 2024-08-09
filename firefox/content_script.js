@@ -26,30 +26,79 @@ chrome.storage.sync.get("domains", async result => {
 
     function overrideHTMLMediaElement() {
         if (!sessionStorage.getItem("yt-like-shortcuts-speed")) sessionStorage.setItem("yt-like-shortcuts-speed", "1");
-
         let speed = parseFloat(sessionStorage.getItem("yt-like-shortcuts-speed"));
+
+        if (!sessionStorage.getItem("yt-like-shortcuts-volume")) sessionStorage.setItem("yt-like-shortcuts-volume", "1");
+        let volume = parseFloat(sessionStorage.getItem("yt-like-shortcuts-volume"));
+
+        if (!sessionStorage.getItem("yt-like-shortcuts-muted")) sessionStorage.setItem("yt-like-shortcuts-muted", "true");
+        let muted = sessionStorage.getItem("yt-like-shortcuts-muted") === "true";
 
         let medias = new Set;
 
-        let allow = false;
+        let allowPlaybackRateChange = false;
 
-        const originalDescriptor = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, "playbackRate");
+        const originalPlaybackRateDescriptor = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, "playbackRate");
 
         Object.defineProperty(HTMLMediaElement.prototype, "playbackRate", {
             get: function() {
-                return originalDescriptor.get.call(this);
+                return originalPlaybackRateDescriptor.get.call(this);
             },
             set: function(value) {
-                if (allow) originalDescriptor.set.call(this, value);
+                if (allowPlaybackRateChange) originalPlaybackRateDescriptor.set.call(this, value);
             }
         });
 
         function setPlaybackRate(media, value) {
-            allow = true;
+            allowPlaybackRateChange = true;
             try {
                 media.playbackRate = value;
             } finally {
-                allow = false;
+                allowPlaybackRateChange = false;
+            }
+        };
+
+        let allowVolumeChange = false;
+
+        const originalVolumeDescriptor = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, "volume");
+
+        Object.defineProperty(HTMLMediaElement.prototype, "volume", {
+            get: function() {
+                return originalVolumeDescriptor.get.call(this);
+            },
+            set: function(value) {
+                if (allowVolumeChange) originalVolumeDescriptor.set.call(this, value);
+            }
+        });
+
+        function setVolume(media, value) {
+            allowVolumeChange = true;
+            try {
+                media.volume = value;
+            } finally {
+                allowVolumeChange = false;
+            }
+        };
+
+        let allowMutedChange = false;
+
+        const originalMutedDescriptor = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, "muted");
+
+        Object.defineProperty(HTMLMediaElement.prototype, "muted", {
+            get: function() {
+                return originalMutedDescriptor.get.call(this);
+            },
+            set: function(value) {
+                if (allowMutedChange) originalMutedDescriptor.set.call(this, value);
+            }
+        });
+
+        function setMuted(media, value) {
+            allowMutedChange = true;
+            try {
+                media.muted = value;
+            } finally {
+                allowMutedChange = false;
             }
         };
 
@@ -78,21 +127,19 @@ chrome.storage.sync.get("domains", async result => {
             if (medias.has(this)) return originalPlay.apply(this, arguments);
             medias.add(this);
 
-            this.addEventListener("mouseenter", e => {
-                this.hover = true;
-
-                this.mediaStatus.style.display = "block";
-            });
-
-            this.addEventListener("mouseleave", e => {
-                this.hover = false;
-
-                this.mediaStatus.style.display = "none";
-            });
-
             setPlaybackRate(this, speed);
 
             createMediaStatus(this);
+
+            this.addEventListener("mouseenter", () => {
+                this.hover = true;
+                this.mediaStatus.style.display = "block";
+            });
+
+            this.addEventListener("mouseleave", () => {
+                this.hover = false;
+                if (!this.pending) this.mediaStatus.style.display = "none";
+            });
 
             return originalPlay.apply(this, arguments);
         };
@@ -101,11 +148,11 @@ chrome.storage.sync.get("domains", async result => {
             if (media) {
                 media.mediaStatus.innerText = str;
                 media.mediaStatus.style.display = "block";
-
                 if (media.pending) clearTimeout(media.pending);
                 media.pending = setTimeout(() => {
-                    if (!media.hover) media.mediaStatus.style.display = "none";
                     media.mediaStatus.innerText = `Speed: ${speed}`;
+                    if (!media.hover) media.mediaStatus.style.display = "none";
+                    media.pending = null;
                 }, 2000);
                 return;
             }
@@ -143,7 +190,7 @@ chrome.storage.sync.get("domains", async result => {
                         }
                         showMediaStatus(`Progress: ${value} / 10`);
                         return;
-                    case "forward":
+                    case "goForward":
                         for (let media of medias) {
                             try {
                                 media.currentTime = Math.min(media.duration, media.currentTime + value);
@@ -151,7 +198,7 @@ chrome.storage.sync.get("domains", async result => {
                         }
                         showMediaStatus(`Forward: ${value}s`);
                         return;
-                    case "backward":
+                    case "goBackward":
                         for (let media of medias) {
                             try {
                                 media.currentTime = Math.max(0, media.currentTime - value);
@@ -176,20 +223,34 @@ chrome.storage.sync.get("domains", async result => {
                         }
                         return;
                     case "volumeUp":
+                        volume = Math.min(1, volume + value / 100);
                         for (let media of medias) {
                             try {
-                                media.volume = Math.min(1, media.volume + value / 100);
-                                showMediaStatus(`Volume: ${Math.round(media.volume * 100)}%`, media);
+                                setVolume(media, volume);
                             } catch (e) { }
                         }
+                        sessionStorage.setItem("yt-like-shortcuts-volume", String(volume));
+                        showMediaStatus(`Volume: ${Math.round(volume * 100)}%`);
                         return;
                     case "volumeDown":
+                        volume = Math.max(0, volume - value / 100);
                         for (let media of medias) {
                             try {
-                                media.volume = Math.max(0, media.volume - value / 100);
-                                showMediaStatus(`Volume: ${Math.round(media.volume * 100)}%`, media);
+                                setVolume(media, volume);
                             } catch (e) { }
                         }
+                        sessionStorage.setItem("yt-like-shortcuts-volume", String(volume));
+                        showMediaStatus(`Volume: ${Math.round(volume * 100)}%`);
+                        return;
+                    case "toggleMuted":
+                        muted = !muted;
+                        for (let media of medias) {
+                            try {
+                                setMuted(media, muted);
+                            } catch (e) { }
+                        }
+                        sessionStorage.setItem("yt-like-shortcuts-muted", String(muted));
+                        showMediaStatus(muted ? "Muted" : "Unmuted");
                         return;
                     case "resetPlaybackRate":
                         speed = 1;
@@ -231,16 +292,16 @@ chrome.storage.sync.get("domains", async result => {
             if (e.shiftKey) {
                 switch (e.key) {
                     case "ArrowRight":
-                        changeMediaStatus("forward", 30);
+                        changeMediaStatus("goForward", 30);
                         return;
                     case "ArrowLeft":
-                        changeMediaStatus("backward", 30);
+                        changeMediaStatus("goBackward", 30);
                         return;
                     case "L":
-                        changeMediaStatus("forward", 60);
+                        changeMediaStatus("goForward", 60);
                         return;
                     case "J":
-                        changeMediaStatus("backward", 60);
+                        changeMediaStatus("goBackward", 60);
                         return;
                     case "ArrowUp":
                         changeMediaStatus("volumeUp", 20);
@@ -271,16 +332,16 @@ chrome.storage.sync.get("domains", async result => {
                     changeMediaStatus("toggleFullscreen");
                     return;
                 case "ArrowRight":
-                    changeMediaStatus("forward", 5);
+                    changeMediaStatus("goForward", 5);
                     return;
                 case "ArrowLeft":
-                    changeMediaStatus("backward", 5);
+                    changeMediaStatus("goBackward", 5);
                     return;
                 case "l":
-                    changeMediaStatus("forward", 10);
+                    changeMediaStatus("goForward", 10);
                     return;
                 case "j":
-                    changeMediaStatus("backward", 10);
+                    changeMediaStatus("goBackward", 10);
                     return;
                 case ".":
                     changeMediaStatus("nextFrame");
@@ -293,6 +354,9 @@ chrome.storage.sync.get("domains", async result => {
                     return;
                 case "ArrowDown":
                     changeMediaStatus("volumeDown", 5);
+                    return;
+                case "m":
+                    changeMediaStatus("toggleMuted");
                     return;
                 default:
                     return;
