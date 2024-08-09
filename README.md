@@ -7,8 +7,8 @@ YouTube ライクなキーボードショートカットを様々なサイトで
 - Shift + \ ("_"):  再生スピードをリセット
 - Shift + 右/左矢印キー: 30 秒進む/戻る
 - Shift + L/J: 60 秒進む/戻る
-YouTube に元から存在するショートカットは以下のスクリーンショットから確認できます。
+YouTube に元から存在するショートカットは以下のスクリーンショットから確認できます。(不要なものはサポートされていません)
 
 ![image](https://github.com/user-attachments/assets/d0b3ae3c-f99c-4561-8ba7-21543579cff1)
 
-インストール・詳しい情報：https://addons.mozilla.org/en-US/firefox/addon/yt-like-shortcuts/
+インストール：https://addons.mozilla.org/en-US/firefox/addon/yt-like-shortcuts/
