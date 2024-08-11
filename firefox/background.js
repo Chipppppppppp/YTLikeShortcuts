@@ -1,8 +1,13 @@
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "getCurrentTab") {
-        chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+        browser.tabs.query({ active: true, currentWindow: true }, tabs => {
             sendResponse(tabs[0]);
         });
         return true;
+    } else if (message.type === "changeMediaStatus") {
+        browser.tabs.executeScript(sender.tabId, {
+            code: `window.postMessage(${JSON.stringify(message)}, '*');`,
+            allFrames: true
+        });
     }
 });

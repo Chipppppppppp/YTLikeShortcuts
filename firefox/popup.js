@@ -8,7 +8,7 @@ browser.tabs.query({ active: true, currentWindow: true })
         dialog.querySelector("#new-domain-input").value = new URL(tabs[0].url).origin;
     });
 
-chrome.storage.sync.get("domains", result => {
+browser.storage.sync.get("domains", result => {
     let domains = result.domains || defaultDomains.slice();
 
     let dialog = document.getElementById("dialog");
@@ -19,7 +19,7 @@ chrome.storage.sync.get("domains", result => {
             alert("Invalid input")
         } else if (!domains.includes(newDomainInput)) {
             domains.push(newDomainInput);
-            chrome.storage.sync.set({ domains });
+            browser.storage.sync.set({ domains });
             alert(`Domain added: ${newDomainInput}`);
             updateDomainList(dialog, domains);
             browser.tabs.query({ active: true, currentWindow: true })
@@ -34,7 +34,7 @@ chrome.storage.sync.get("domains", result => {
     dialog.querySelector("#reset-domains").addEventListener("click", () => {
         if (confirm("Are you sure you want to reset domains to default?")) {
             domains = defaultDomains.slice();
-            chrome.storage.sync.set({ domains });
+            browser.storage.sync.set({ domains });
             alert("Domains have been reset to default.");
             updateDomainList(dialog, domains);
             browser.tabs.query({ active: true, currentWindow: true })
@@ -69,7 +69,7 @@ chrome.storage.sync.get("domains", result => {
                     const index = domains.indexOf(domainToRemove);
                     if (index !== -1) {
                         domains.splice(index, 1);
-                        chrome.storage.sync.set({ domains });
+                        browser.storage.sync.set({ domains });
                         alert(`Domain removed: ${domainToRemove}`);
                     } else {
                         alert(`Domain not found: ${domainToRemove}`);
@@ -93,7 +93,7 @@ chrome.storage.sync.get("domains", result => {
                     const index = domains.indexOf(domainToEdit);
                     if (index !== -1) {
                         domains[index] = newDomainName;
-                        chrome.storage.sync.set({ domains });
+                        browser.storage.sync.set({ domains });
                         alert(`Domain edited: ${domainToEdit} to ${newDomainName}`);
                     } else {
                         alert(`Domain not found: ${domainToEdit}`);
