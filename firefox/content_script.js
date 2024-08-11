@@ -1,26 +1,34 @@
-const defaultDomains = [
-    "https://www.youtube.com",
-    "https://m.youtube.com"
+const defaultPatterns = [
+    "https://www.youtube.com/*",
+    "https://www.nicovideo.jp/*"
 ];
 
 const oneFrame = 1 / 30;
 
-browser.storage.local.get("domains", async result => {
-    let domains = result.domains || defaultDomains.slice();
+browser.storage.local.get("patterns", async result => {
+    let patterns = result.patterns || defaultPatterns.slice();
 
-    let tab = await new Promise((resolve, reject) => {
+    let topUrl = await new Promise((resolve, reject) => {
         browser.runtime.sendMessage({ type: "getCurrentTab" }, response => {
             if (browser.runtime.lastError) {
                 reject(new Error(browser.runtime.lastError));
             } else {
-                resolve(response);
+                resolve(response.url);
             }
         });
     });
 
-    let origin = new URL(tab.url).origin;
+    function matchPattern(url, pattern) {
+        let regexPattern = pattern
+            .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+            .replace(/\*/g, ".*")
+            .replace(/\?/g, ".")
+            .replace(/\|/g, "|");
 
-    if (!domains.some(domain => location.origin === domain) && !domains.some(domain => origin === domain)) return;
+        return new RegExp(`^${regexPattern}$`).test(url);
+    }
+
+    if (!patterns.some(pattern => matchPattern(location.href, pattern) || matchPattern(topUrl, pattern))) return;
 
     console.log("YT-Like Shortcuts Enabled");
 
