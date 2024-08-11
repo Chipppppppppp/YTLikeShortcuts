@@ -5,7 +5,7 @@ const defaultDomains = [
 
 const oneFrame = 1 / 30;
 
-browser.storage.sync.get("domains", async result => {
+browser.storage.local.get("domains", async result => {
     let domains = result.domains || defaultDomains.slice();
 
     let tab = await new Promise((resolve, reject) => {
