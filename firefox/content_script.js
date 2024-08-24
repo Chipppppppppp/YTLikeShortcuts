@@ -3,8 +3,6 @@ const defaultPatterns = [
     "https://www.nicovideo.jp/*"
 ];
 
-const oneFrame = 1 / 30;
-
 browser.storage.local.get("patterns", async result => {
     let patterns = result.patterns || defaultPatterns.slice();
 
@@ -159,6 +157,8 @@ browser.storage.local.get("patterns", async result => {
             return originalPlay.apply(this, arguments);
         };
 
+        const oneFrame = 1 / 30;
+
         function showMediaStatus(str, media) {
             if (media) {
                 createMediaStatus(media);
@@ -221,7 +221,7 @@ browser.storage.local.get("patterns", async result => {
                     for (let media of medias) {
                         try {
                             media.currentTime = Math.min(media.duration, media.currentTime + oneFrame);
-                            showMediaStatus("Next Frame", media);
+                            showMediaStatus("Next frame", media);
                         } catch (e) { }
                     }
                     return;
@@ -229,7 +229,7 @@ browser.storage.local.get("patterns", async result => {
                     for (let media of medias) {
                         try {
                             media.currentTime = Math.max(0, media.currentTime - oneFrame);
-                            showMediaStatus("Previous Frame", media);
+                            showMediaStatus("Previous frame", media);
                         } catch (e) { }
                     }
                     return;
