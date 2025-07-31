@@ -1,15 +1,10 @@
-const defaultPatterns = [
-    "https://www.youtube.com/*",
-    "https://www.nicovideo.jp/*"
-];
-
 browser.tabs.query({ active: true, currentWindow: true })
     .then(tabs => {
         dialog.querySelector("#new-pattern-input").value = new URL(tabs[0].url).origin + "/*";
     });
 
 browser.storage.local.get("patterns", result => {
-    let patterns = result.patterns || defaultPatterns.slice();
+    let patterns = result.patterns || [];
 
     let dialog = document.getElementById("dialog");
 
@@ -31,11 +26,11 @@ browser.storage.local.get("patterns", result => {
         }
     });
 
-    dialog.querySelector("#reset-patterns").addEventListener("click", () => {
-        if (confirm("Are you sure you want to reset URL patterns to default?")) {
-            patterns = defaultPatterns.slice();
+    dialog.querySelector("#clear-patterns").addEventListener("click", () => {
+        if (confirm("Are you sure you want to clear URL patterns?")) {
+            patterns = [];
             browser.storage.local.set({ patterns });
-            alert("URL patterns have been reset to default.");
+            alert("URL patterns have been cleared.");
             updatePatternList(dialog, patterns);
             browser.tabs.query({ active: true, currentWindow: true })
                 .then(tabs => {

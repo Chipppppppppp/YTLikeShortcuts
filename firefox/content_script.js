@@ -1,10 +1,5 @@
-const defaultPatterns = [
-    "https://www.youtube.com/*",
-    "https://www.nicovideo.jp/*"
-];
-
 browser.storage.local.get("patterns", async result => {
-    let patterns = result.patterns || defaultPatterns.slice();
+    let patterns = result.patterns || [];
 
     let topUrl = await new Promise((resolve, reject) => {
         browser.runtime.sendMessage({ type: "getCurrentTab" }, response => {
